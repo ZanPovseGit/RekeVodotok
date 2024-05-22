@@ -1,6 +1,6 @@
 import csv
 from datetime import datetime
-
+import os
 
 reka_data = []
 with open('data/raw/reka_data.csv', mode='r', newline='', encoding='utf-8') as csvfile:
@@ -8,7 +8,6 @@ with open('data/raw/reka_data.csv', mode='r', newline='', encoding='utf-8') as c
     for row in reader:
         row['Datum'] = datetime.strptime(row['Datum'], '%Y-%m-%d %H:%M')
         reka_data.append(row)
-
 
 weather_data = []
 with open('data/raw/weather_data.csv', mode='r', newline='', encoding='utf-8') as csvfile:
@@ -35,11 +34,19 @@ headers = [
 ]
 
 output_csv_file = 'data/processed/learning_data.csv'
-with open(output_csv_file, mode='w', newline='', encoding='utf-8') as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=headers)
-    writer.writeheader()
-    for row in matched_data:
-        row['Datum'] = row['Datum'].strftime('%Y-%m-%d %H:%M')
-        writer.writerow(row)
+file_exists = os.path.exists(output_csv_file) and os.path.getsize(output_csv_file) > 0
 
-print(f"Data has been saved to {output_csv_file}")
+with open(output_csv_file, mode='a', newline='', encoding='utf-8') as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=headers)
+
+    if not file_exists:
+        writer.writeheader()
+    
+    if file_exists:
+        for row in matched_data:
+            row['Datum'] = row['Datum'].strftime('%Y-%m-%d %H:%M')
+            writer.writerow(row)
+        print(f"Data has been appended to {output_csv_file}")
+    else:
+        print("No existing data found in the output file. No new data appended.")
+

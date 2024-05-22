@@ -1,0 +1,119 @@
+name: Data Download
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  check-api1:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check API 1
+      run: |
+        curl -sSf https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&daily=weather_code,temperature_2m_max,rain_sum || exit 1
+
+  check-api2:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check API 2
+      run: |
+        curl -sSf http://www.arso.gov.si/xml/vode/hidro_podatki_zadnji.xml || exit 1
+
+  download-data-script1:
+    needs: check-api1
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8 
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt 
+        
+    - name: Run Python script
+      run: python src/data/weather.py
+
+    - name: setup git config
+      run: |
+        git config user.name "ZanPovseGit"
+        git config user.email "zan.povse11@gmail.com"
+
+      - name: commit
+        run: |
+          git add .
+          git commit -m "data commit weather"
+          git push origin main
+
+  download-data-script2:
+    needs: check-api2
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8 
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt 
+        
+    - name: Run Python script
+      run: python src/data/reka.py
+
+    - name: setup git config
+      run: |
+        git config user.name "ZanPovseGit"
+        git config user.email "zan.povse11@gmail.com"
+
+      - name: commit
+        run: |
+          git add .
+          git commit -m "data commit reka"
+          git push origin main
+
+  pushNpull:
+    needs: [download-data-script1, download-data-script2]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install Dependencies
+      run: |
+       pip install -r requirements.txt
+
+    - name: Get dvc files
+      run: |
+        dvc remote add origin s3://dvc -f
+        dvc remote modify origin endpointurl https://dagshub.com/ZanPovseGit/RekeVodotok.s3
+        dvc remote modify origin --local access_key_id bdf091cc3f58df2c8346bb8ce616545e0e40b351
+        dvc remote modify origin --local secret_access_key bdf091cc3f58df2c8346bb8ce616545e0e40b351
+        dvc pull -r origin
+
+    - name: Run Data Zdruzitev
+      run: |
+        python src/data/zdruzitev.py
+        dvc push -r origin
+
+

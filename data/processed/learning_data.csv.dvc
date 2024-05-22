@@ -1,0 +1,5 @@
+outs:
+- md5: 122a4b13c365cf445feaa2758a48768a
+  size: 1346
+  hash: md5
+  path: learning_data.csv
