@@ -59,3 +59,4 @@ great_expectations
 onnxruntime
 pymongo
 mlflow
+unidecode
