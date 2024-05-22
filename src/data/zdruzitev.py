@@ -48,5 +48,5 @@ with open(output_csv_file, mode='a', newline='', encoding='utf-8') as csvfile:
             writer.writerow(row)
         print(f"Data has been appended to {output_csv_file}")
     else:
-        print("No existing data found in the output file. No new data appended.")
+        print("No new data appended.")
 
