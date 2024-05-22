@@ -48,11 +48,11 @@ jobs:
         git config user.name "ZanPovseGit"
         git config user.email "zan.povse11@gmail.com"
 
-      - name: commit
-        run: |
-          git add .
-          git commit -m "data commit weather"
-          git push origin main
+    - name: commit
+      run: |
+        git add .
+        git commit -m "data commit weather"
+        git push origin main
 
   download-data-script2:
     needs: check-api2
