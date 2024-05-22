@@ -80,11 +80,11 @@ jobs:
         git config user.name "ZanPovseGit"
         git config user.email "zan.povse11@gmail.com"
 
-      - name: commit
-        run: |
-          git add .
-          git commit -m "data commit reka"
-          git push origin main
+    - name: commit
+      run: |
+        git add .
+        git commit -m "data commit reka"
+        git push origin main
 
   pushNpull:
     needs: [download-data-script1, download-data-script2]
