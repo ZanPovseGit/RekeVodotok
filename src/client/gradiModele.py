@@ -20,9 +20,21 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     train_data = pd.read_csv('data/processed/learning_data.csv')
     eval_data = pd.read_csv('data/processed/evaluation_data.csv')
 
+    # Check and convert target columns to numeric
+    train_data['Pretok'] = pd.to_numeric(train_data['Pretok'], errors='coerce')
+    train_data['Pretok Znacilni'] = pd.to_numeric(train_data['Pretok Znacilni'], errors='coerce')
+    eval_data['Pretok'] = pd.to_numeric(eval_data['Pretok'], errors='coerce')
+    eval_data['Pretok Znacilni'] = pd.to_numeric(eval_data['Pretok Znacilni'], errors='coerce')
+
+    # Handle any NaN values that resulted from the conversion
+    train_data.dropna(subset=['Pretok', 'Pretok Znacilni'], inplace=True)
+    eval_data.dropna(subset=['Pretok', 'Pretok Znacilni'], inplace=True)
+
+    # Define feature columns
     numerical_features = ['Temperature 2m', 'Rain']
     categorical_features = ['Weather Code', 'Merilno Mesto']
 
+    # Define preprocessing pipelines
     numerical_pipeline = Pipeline([
         ('imputer', SimpleImputer(strategy='mean')),
         ('scaler', MinMaxScaler())
@@ -38,6 +50,7 @@ with mlflow.start_run(run_name="GrajenjeModela"):
         ('cat', categorical_pipeline, categorical_features)
     ])
 
+    # Split features and target
     X_train = train_data[numerical_features + categorical_features]
     y_train_pretok = train_data['Pretok']
     y_train_znacilni = train_data['Pretok Znacilni']
@@ -46,7 +59,7 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     y_eval_pretok = eval_data['Pretok']
     y_eval_znacilni = eval_data['Pretok Znacilni']
 
-    # Predproces
+    # Preprocess features
     X_train_processed = preprocessor.fit_transform(X_train)
     X_eval_processed = preprocessor.transform(X_eval)
 
@@ -60,16 +73,15 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     train_gen_znacilni = TimeseriesGenerator(X_train_processed, y_train_znacilni, length=sequence_length, batch_size=batch_size)
     eval_gen_znacilni = TimeseriesGenerator(X_eval_processed, y_eval_znacilni, length=sequence_length, batch_size=batch_size)
 
-    #PRETOK-----------------------------
+    # PRETOK Model
     model_pretok = Sequential()
     model_pretok.add(LSTM(50, activation='relu', input_shape=(sequence_length, X_train_processed.shape[1])))
     model_pretok.add(Dense(1))
     model_pretok.compile(optimizer='adam', loss='mse')
 
-
     model_pretok.fit(train_gen_pretok, epochs=50, validation_data=eval_gen_pretok)
 
-    #ZNACILNOST PRETOKA-------------------------------
+    # ZNACILNOST PRETOKA Model
     model_znacilni = Sequential()
     model_znacilni.add(LSTM(50, activation='relu', input_shape=(sequence_length, X_train_processed.shape[1])))
     model_znacilni.add(Dense(1))
