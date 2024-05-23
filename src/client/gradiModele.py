@@ -7,9 +7,10 @@ from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 import mlflow
-import dagshub
 
-dagshub.init("RekeVodotok", "ZanPovseGit", mlflow=True)
+
+os.environ["MLFLOW_TRACKING_USERNAME"] = "ZanPovseGit"
+os.environ["MLFLOW_TRACKING_PASSWORD"] = "761209f44c347c69076d1becee6ca6c1d9257e4f"
 
 mlflow.set_tracking_uri("https://dagshub.com/ZanPovseGit/RekeVodotok.mlflow")
 

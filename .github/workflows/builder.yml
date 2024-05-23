@@ -37,7 +37,6 @@ jobs:
     
     - name: Run builder
       run: |
-       export ${{ secrets.MLFLOW_TRACKING_USERNAME }}
        python src/client/gradiModele.py
 
 
