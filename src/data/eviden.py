@@ -18,7 +18,7 @@ from evidently.test_preset import DataStabilityTestPreset, NoTargetPerformanceTe
 from evidently.tests import *
 
 
-df = pd.read_json('data/processed/learning_data.csv')
+df = pd.read_csv('data/processed/learning_data.csv')
 
 
 df.rename(columns={'vodostaj': 'target'}, inplace=True)

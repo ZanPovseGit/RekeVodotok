@@ -1,0 +1,48 @@
+name: Build pipeline
+on:
+  workflow_run:
+    workflows: ["Data Download"]
+    types:
+      - completed
+jobs:
+
+  buildModels: 
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Install Dependencies
+      run: |
+       pip install -r requirements.txt
+
+    - name: Install evidently
+      run: |
+       pip install evidently onnx tf2onnx 
+       pip install mlflow onnxruntime
+
+    - name: Get dvc files
+      run: |
+        dvc remote add origin s3://dvc -f
+        dvc remote modify origin endpointurl https://dagshub.com/ZanPovseGit/RekeVodotok.s3
+        dvc remote modify origin --local access_key_id bdf091cc3f58df2c8346bb8ce616545e0e40b351
+        dvc remote modify origin --local secret_access_key bdf091cc3f58df2c8346bb8ce616545e0e40b351
+        dvc pull -r origin
+    
+    - name: Run builder
+      run: |
+       export ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+       python src/client/gradiModele.py
+
+
+  dummyJob:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dummy Step
+        run: echo "This is a dummy step"

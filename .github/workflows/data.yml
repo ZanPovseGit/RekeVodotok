@@ -152,11 +152,6 @@ jobs:
         pip install -r requirements.txt
         pip install evidently
 
-    - name: setup git config
-      run: |
-        git config user.name "ZanPovseGit"
-        git config user.email "zan.povse11@gmail.com"
-
     - name: Get dvc files
       run: |
         dvc remote add origin s3://dvc -f
@@ -170,6 +165,22 @@ jobs:
         python src/data/zdruzitev.py
         python src/data/eviden.py
         dvc push -r origin
+
+    - name: Commit changes
+      run: |
+        git config --global user.name "ZanPovseGit"
+        git config --global user.email "zan.povse11@gmail.com"
+        git checkout main
+        git pull origin main
+          
+        git add .
+        if ! git diff-index --quiet HEAD; then
+          git commit -m "data commit reka"
+          git push origin main
+        else
+          echo "No changes to commit"
+        fi
+      shell: bash
 
 
 
