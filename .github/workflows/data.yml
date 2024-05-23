@@ -145,6 +145,7 @@ jobs:
     - name: Install Dependencies
       run: |
         pip install -r requirements.txt
+        pip install evidently
 
     - name: setup git config
       run: |
