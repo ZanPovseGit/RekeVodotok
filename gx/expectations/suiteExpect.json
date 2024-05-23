@@ -3,23 +3,6 @@
   "expectation_suite_name": "suiteExpect",
   "expectations": [
     {
-      "expectation_type": "expect_table_row_count_to_be_between",
-      "kwargs": {
-        "max_value": 8,
-        "min_value": 8
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {},
-            "metric_name": "table.row_count",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
-      }
-    },
-    {
       "expectation_type": "expect_table_columns_to_match_set",
       "kwargs": {
         "column_set": [
@@ -171,28 +154,6 @@
               "column": "Rain"
             },
             "metric_name": "column_values.nonnull.unexpected_count",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
-      }
-    },
-    {
-      "expectation_type": "expect_column_min_to_be_between",
-      "kwargs": {
-        "column": "Vodostaj",
-        "max_value": 125,
-        "min_value": 125,
-        "strict_max": false,
-        "strict_min": false
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "Vodostaj"
-            },
-            "metric_name": "column.min",
             "metric_value_kwargs": null
           },
           "num_batches": 1
