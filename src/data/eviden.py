@@ -50,7 +50,7 @@ tests = TestSuite(tests=[
 
 tests.run(reference_data=reference, current_data=current)
 
-tests.save_html("reports/figures/index.html")
+tests.save_html("reports/index.html")
 
 train_df, test_df = train_test_split(df, test_size=0.1, random_state=42)
 
