@@ -43,19 +43,18 @@ jobs:
     - name: Run Python script
       run: python src/data/weather.py
 
-    - name: setup git config
+    - name: Commit changes
       run: |
-        git config user.name "ZanPovseGit"
-        git config user.email "zan.povse11@gmail.com"
-
-    - name: commit
-      run: |
+        git config --global user.name "ZanPovseGit"
+        git config --global user.email "zan.povse11@gmail.com"
+          
         git add .
         if ! git diff-index --quiet HEAD; then
-          git commit -m "data commit weather"
+          git commit -m "data commit reka"
           git push origin main
         else
           echo "No changes to commit"
+      shell: bash
 
   download-data-script2:
     needs: check-api2
@@ -78,19 +77,18 @@ jobs:
     - name: Run Python script
       run: python src/data/reka.py
 
-    - name: setup git config
+    - name: Commit changes
       run: |
-        git config user.name "ZanPovseGit"
-        git config user.email "zan.povse11@gmail.com"
-
-    - name: commit
-      run: |
+        git config --global user.name "ZanPovseGit"
+        git config --global user.email "zan.povse11@gmail.com"
+          
         git add .
         if ! git diff-index --quiet HEAD; then
           git commit -m "data commit reka"
           git push origin main
         else
           echo "No changes to commit"
+      shell: bash
 
 
   pushNpull:
