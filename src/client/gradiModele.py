@@ -20,15 +20,12 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     train_data = pd.read_csv('data/processed/learning_data.csv')
     eval_data = pd.read_csv('data/processed/evaluation_data.csv')
 
+
     # Check and convert target columns to numeric
     train_data['Pretok'] = pd.to_numeric(train_data['Pretok'], errors='coerce')
     train_data['Pretok Znacilni'] = pd.to_numeric(train_data['Pretok Znacilni'], errors='coerce')
     eval_data['Pretok'] = pd.to_numeric(eval_data['Pretok'], errors='coerce')
     eval_data['Pretok Znacilni'] = pd.to_numeric(eval_data['Pretok Znacilni'], errors='coerce')
-
-    # Handle any NaN values that resulted from the conversion
-    train_data.dropna(subset=['Pretok', 'Pretok Znacilni'], inplace=True)
-    eval_data.dropna(subset=['Pretok', 'Pretok Znacilni'], inplace=True)
 
     # Define feature columns
     numerical_features = ['Temperature 2m', 'Rain']
@@ -58,6 +55,7 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     X_eval = eval_data[numerical_features + categorical_features]
     y_eval_pretok = eval_data['Pretok']
     y_eval_znacilni = eval_data['Pretok Znacilni']
+
 
     # Preprocess features
     X_train_processed = preprocessor.fit_transform(X_train)
