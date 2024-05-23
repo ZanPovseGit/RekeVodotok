@@ -7,6 +7,9 @@ from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 import mlflow
+import dagshub
+
+dagshub.init("RekeVodotok", "ZanPovseGit", mlflow=True)
 
 mlflow.set_tracking_uri("https://dagshub.com/ZanPovseGit/RekeVodotok.mlflow")
 

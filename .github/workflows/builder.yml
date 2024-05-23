@@ -25,7 +25,7 @@ jobs:
     - name: Install evidently
       run: |
        pip install evidently onnx tf2onnx 
-       pip install mlflow onnxruntime
+       pip install mlflow onnxruntime dagshub
 
     - name: Get dvc files
       run: |
