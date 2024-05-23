@@ -23,7 +23,7 @@ from great_expectations.checkpoint.types.checkpoint_result import (
 )
 from great_expectations.data_context import FileDataContext, get_context
 
-data_context: FileDataContext = get_context(context_root_dir="C:\Users\Uporabnik\Desktop\ProjektIIS\gx")
+data_context: FileDataContext = get_context(context_root_dir="gx")
 
 result: CheckpointResult = data_context.run_checkpoint(
     checkpoint_name="validator",
