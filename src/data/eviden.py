@@ -21,7 +21,7 @@ from evidently.tests import *
 df = pd.read_csv('data/processed/learning_data.csv')
 
 
-df.rename(columns={'vodostaj': 'target'}, inplace=True)
+df.rename(columns={'Vodostaj': 'target'}, inplace=True)
 df['prediction'] = df['target'].values + np.random.normal(0, 5, df.shape[0])
 
 print(df.head())
