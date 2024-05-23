@@ -1,3 +1,4 @@
+import mlflow.keras
 import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -20,6 +21,8 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     train_data = pd.read_csv('data/processed/learning_data.csv')
     eval_data = pd.read_csv('data/processed/evaluation_data.csv')
 
+    print(train_data.head())
+    print(eval_data.head())
 
     # Check and convert target columns to numeric
     train_data['Pretok'] = pd.to_numeric(train_data['Pretok'], errors='coerce')
@@ -93,7 +96,28 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     print(f'Pretok model loss: {loss_pretok}')
     print(f'Pretok Znacilni model loss: {loss_znacilni}')
 
-    mlflow.log_metric("Loss Pretoka",loss_pretok)
+    mlflow.log_metric("LossPretoka",loss_pretok)
     mlflow.log_metric("Loss znacilnosti pretoka",loss_znacilni)
     mlflow.log_param("Sekvenca dolzina",sequence_length)
     mlflow.log_param("Batch size",batch_size)
+
+
+    try:
+        previous_production_run = mlflow.search_runs(filter_string="tags.environment = 'production'",order_by=["start_time DESC"]).iloc[0]
+        print(previous_production_run.to_string())
+        previous_production_run_id = previous_production_run["run_id"]
+        previous_model_path = f"runs:/{previous_production_run_id}/lstm_model"
+        prev_loss = previous_production_run["metrics.LossPretoka"]
+        print(f"Previous model accuracy: {prev_loss}")
+    except IndexError:
+        print("No previous model found.")
+
+
+
+    if loss_pretok >= prev_loss:
+        mlflow.log_param("environment", "production")
+        mlflow.keras.log_model(model_pretok,"lstmPretok")
+        mlflow.register_model("runs:/" + mlflow.active_run().info.run_id + "/lstmPretok", "GradenjeModela")
+        print("New model saved.")
+    else:
+        print("New model is not better than the previous one. Keeping the old model.")

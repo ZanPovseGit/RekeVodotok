@@ -163,8 +163,8 @@ jobs:
     - name: Run data validation
       run: |
         python src/data/zdruzitev.py
-        python src/data/eviden.py
         dvc push -r origin
+        python src/data/eviden.py
 
     - name: Commit changes
       run: |
