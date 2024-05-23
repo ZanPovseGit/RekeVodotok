@@ -50,7 +50,7 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     X_train_processed = preprocessor.fit_transform(X_train)
     X_eval_processed = preprocessor.transform(X_eval)
 
-    sequence_length = 2
+    sequence_length = 1
     batch_size = 32
 
     # Create TimeseriesGenerator for training and evaluation
