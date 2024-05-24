@@ -163,8 +163,57 @@ jobs:
     - name: Run data validation
       run: |
         python src/data/zdruzitev.py
+        dvc add data/processed/learning_data.csv
         dvc push -r origin
         python src/data/eviden.py
+
+    - name: Commit changes
+      run: |
+        git config --global user.name "ZanPovseGit"
+        git config --global user.email "zan.povse11@gmail.com"
+        git checkout main
+        git pull origin main
+          
+        git add .
+        if ! git diff-index --quiet HEAD; then
+          git commit -m "data commit reka"
+          git push origin main
+        else
+          echo "No changes to commit"
+        fi
+      shell: bash
+  
+  loadData:
+    needs: evidently
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install Dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Get dvc files
+      run: |
+        dvc remote add origin s3://dvc -f
+        dvc remote modify origin endpointurl https://dagshub.com/ZanPovseGit/RekeVodotok.s3
+        dvc remote modify origin --local access_key_id bdf091cc3f58df2c8346bb8ce616545e0e40b351
+        dvc remote modify origin --local secret_access_key bdf091cc3f58df2c8346bb8ce616545e0e40b351
+        dvc pull -r origin
+
+    - name: Run data validation
+      run: |
+        python src/data/reka.py
+        python src/data/weather.py
+        python src/data/zdruzitev.py
+        dvc push -r origin
 
     - name: Commit changes
       run: |

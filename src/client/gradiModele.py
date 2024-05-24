@@ -4,6 +4,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder, OneHotEncoder
 from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import FunctionTransformer
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
@@ -24,6 +25,17 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     print(train_data.head())
     print(eval_data.head())
 
+    # Custom encoding function
+    def encode_pretok_znacilni(column):
+        mapping = {'mali pretok': 0, 'srednji pretok': 1, 'velik pretok': 3,'':4}
+        return column.replace(mapping)
+
+    # Apply the custom encoding function before converting to numeric
+    train_data['Pretok Znacilni'] = encode_pretok_znacilni(train_data['Pretok Znacilni'])
+    eval_data['Pretok Znacilni'] = encode_pretok_znacilni(eval_data['Pretok Znacilni'])
+
+    print(eval_data['Pretok Znacilni'])
+
     # Check and convert target columns to numeric
     train_data['Pretok'] = pd.to_numeric(train_data['Pretok'], errors='coerce')
     train_data['Pretok Znacilni'] = pd.to_numeric(train_data['Pretok Znacilni'], errors='coerce')
@@ -33,6 +45,7 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     # Define feature columns
     numerical_features = ['Temperature 2m', 'Rain']
     categorical_features = ['Weather Code', 'Merilno Mesto']
+    pretok_znacilni_feature = ['Pretok Znacilni']
 
     # Define preprocessing pipelines
     numerical_pipeline = Pipeline([
@@ -45,25 +58,35 @@ with mlflow.start_run(run_name="GrajenjeModela"):
         ('onehot', OneHotEncoder(handle_unknown='ignore'))
     ])
 
+    pretok_znacilni_pipeline = Pipeline([
+        ('encode', FunctionTransformer(encode_pretok_znacilni, validate=False)),
+        ('imputer', SimpleImputer(strategy='most_frequent'))
+    ])
+
     preprocessor = ColumnTransformer([
         ('num', numerical_pipeline, numerical_features),
-        ('cat', categorical_pipeline, categorical_features)
+        ('cat', categorical_pipeline, categorical_features),
+        ('pretok_znacilni', pretok_znacilni_pipeline, pretok_znacilni_feature)
     ])
 
     # Split features and target
-    X_train = train_data[numerical_features + categorical_features]
+    X_train = train_data[numerical_features + categorical_features + pretok_znacilni_feature]
     y_train_pretok = train_data['Pretok']
     y_train_znacilni = train_data['Pretok Znacilni']
 
-    X_eval = eval_data[numerical_features + categorical_features]
+    X_eval = eval_data[numerical_features + categorical_features + pretok_znacilni_feature]
     y_eval_pretok = eval_data['Pretok']
     y_eval_znacilni = eval_data['Pretok Znacilni']
-
 
     # Preprocess features
     X_train_processed = preprocessor.fit_transform(X_train)
     X_eval_processed = preprocessor.transform(X_eval)
 
+    # Check lengths of processed evaluation data
+    print(f'Length of X_eval_processed: {len(X_eval_processed)}')
+    print(f'Length of y_eval_pretok: {len(y_eval_pretok)}')
+
+    # Ensure sequence length is appropriate
     sequence_length = 1
     batch_size = 32
 
@@ -109,15 +132,13 @@ with mlflow.start_run(run_name="GrajenjeModela"):
         previous_model_path = f"runs:/{previous_production_run_id}/lstm_model"
         prev_loss = previous_production_run["metrics.LossPretoka"]
         print(f"Previous model accuracy: {prev_loss}")
+        
+        if loss_pretok >= prev_loss:
+            mlflow.log_param("environment", "production")
+            mlflow.keras.log_model(model_pretok,"lstmPretok")
+            mlflow.register_model("runs:/" + mlflow.active_run().info.run_id + "/lstmPretok", "GradenjeModela")
+            print("New model saved.")
+        else:
+            print("New model is not better than the previous one. Keeping the old model.")
     except IndexError:
         print("No previous model found.")
-
-
-
-    if loss_pretok >= prev_loss:
-        mlflow.log_param("environment", "production")
-        mlflow.keras.log_model(model_pretok,"lstmPretok")
-        mlflow.register_model("runs:/" + mlflow.active_run().info.run_id + "/lstmPretok", "GradenjeModela")
-        print("New model saved.")
-    else:
-        print("New model is not better than the previous one. Keeping the old model.")
