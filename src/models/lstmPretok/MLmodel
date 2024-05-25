@@ -1,0 +1,20 @@
+artifact_path: lstmPretok
+flavors:
+  python_function:
+    data: data
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.tensorflow
+    python_version: 3.9.18
+  tensorflow:
+    code: null
+    data: data
+    keras_version: 2.10.0
+    model_type: keras
+    save_format: h5
+mlflow_version: 2.9.2
+model_size_bytes: 173770
+model_uuid: 35d83745f2284ccdb8a63bfc20e633e9
+run_id: 81a8d1aa9cc84653a3bca20f26a72a90
+utc_time_created: '2024-05-24 13:22:27.265591'

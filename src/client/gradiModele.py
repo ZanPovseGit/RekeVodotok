@@ -10,6 +10,8 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 import mlflow
 import os
+import joblib
+import numpy as np
 
 
 os.environ["MLFLOW_TRACKING_USERNAME"] = "ZanPovseGit"
@@ -22,9 +24,6 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     train_data = pd.read_csv('data/processed/learning_data.csv')
     eval_data = pd.read_csv('data/processed/evaluation_data.csv')
 
-    print(train_data.head())
-    print(eval_data.head())
-
     # Custom encoding function
     def encode_pretok_znacilni(column):
         mapping = {'mali pretok': 0, 'srednji pretok': 1, 'velik pretok': 3,'':4}
@@ -34,7 +33,6 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     train_data['Pretok Znacilni'] = encode_pretok_znacilni(train_data['Pretok Znacilni'])
     eval_data['Pretok Znacilni'] = encode_pretok_znacilni(eval_data['Pretok Znacilni'])
 
-    print(eval_data['Pretok Znacilni'])
 
     # Check and convert target columns to numeric
     train_data['Pretok'] = pd.to_numeric(train_data['Pretok'], errors='coerce')
@@ -82,9 +80,7 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     X_train_processed = preprocessor.fit_transform(X_train)
     X_eval_processed = preprocessor.transform(X_eval)
 
-    # Check lengths of processed evaluation data
-    print(f'Length of X_eval_processed: {len(X_eval_processed)}')
-    print(f'Length of y_eval_pretok: {len(y_eval_pretok)}')
+    y_train_znacilni = y_train_znacilni.fillna(4)
 
     # Ensure sequence length is appropriate
     sequence_length = 1
@@ -96,6 +92,14 @@ with mlflow.start_run(run_name="GrajenjeModela"):
 
     train_gen_znacilni = TimeseriesGenerator(X_train_processed, y_train_znacilni, length=sequence_length, batch_size=batch_size)
     eval_gen_znacilni = TimeseriesGenerator(X_eval_processed, y_eval_znacilni, length=sequence_length, batch_size=batch_size)
+
+    print("----------------")
+
+    print(X_train_processed)
+    print(y_train_znacilni)
+
+
+    print("----------------")
 
     # PRETOK Model
     model_pretok = Sequential()
@@ -119,23 +123,26 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     print(f'Pretok model loss: {loss_pretok}')
     print(f'Pretok Znacilni model loss: {loss_znacilni}')
 
+    model_znacilni.save("src/models/model.h5")
+
     mlflow.log_metric("LossPretoka",loss_pretok)
     mlflow.log_metric("Loss znacilnosti pretoka",loss_znacilni)
     mlflow.log_param("Sekvenca dolzina",sequence_length)
     mlflow.log_param("Batch size",batch_size)
 
+    joblib.dump(preprocessor, 'models/preprocessor_pipeline.pkl')
 
     try:
         previous_production_run = mlflow.search_runs(filter_string="tags.environment = 'production'",order_by=["start_time DESC"]).iloc[0]
         print(previous_production_run.to_string())
         previous_production_run_id = previous_production_run["run_id"]
-        previous_model_path = f"runs:/{previous_production_run_id}/lstm_model"
+        previous_model_path = f"runs:/{previous_production_run_id}/lstmPretok"
         prev_loss = previous_production_run["metrics.LossPretoka"]
         print(f"Previous model accuracy: {prev_loss}")
         
         if loss_pretok >= prev_loss:
-            mlflow.log_param("environment", "production")
-            mlflow.keras.log_model(model_pretok,"lstmPretok")
+            mlflow.set_tag("environment", "production")
+            mlflow.keras.log_model(model_pretok,"lstmPretok",keras_model_kwargs={"save_format": "h5"})
             mlflow.register_model("runs:/" + mlflow.active_run().info.run_id + "/lstmPretok", "GradenjeModela")
             print("New model saved.")
         else:
