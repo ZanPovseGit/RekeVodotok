@@ -78,6 +78,9 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     sequence_length = 1
     batch_size = 32
 
+    mean_value = y_train_pretok.mean()
+    y_train_pretok = y_train_pretok.fillna(mean_value)
+
     train_gen_pretok = TimeseriesGenerator(X_train_processed, y_train_pretok, length=sequence_length, batch_size=batch_size)
     eval_gen_pretok = TimeseriesGenerator(X_eval_processed, y_eval_pretok, length=sequence_length, batch_size=batch_size)
 
@@ -110,10 +113,22 @@ with mlflow.start_run(run_name="GrajenjeModela"):
 
     converter = tf.lite.TFLiteConverter.from_keras_model(model_znacilni)
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    tflite_model = converter.convert()
 
-    with open('src/models/model_quantized.tflite', 'wb') as f:
-        f.write(tflite_model)
+    converter.target_spec.supported_ops = [
+        tf.lite.OpsSet.TFLITE_BUILTINS,  # TFLite built-in ops.
+        tf.lite.OpsSet.SELECT_TF_OPS     # TensorFlow ops.
+    ]
+    converter._experimental_lower_tensor_list_ops = False
+
+    try:
+        tflite_model = converter.convert()
+        print("Model converted successfully.")
+        
+        with open('src/models/model_quantized.tflite', 'wb') as f:
+            f.write(tflite_model)
+        print("Model saved successfully.")
+    except Exception as e:
+        print(f"Error converting model: {e}")
 
     mlflow.log_metric("LossPretoka",loss_pretok)
     mlflow.log_metric("Loss znacilnosti pretoka",loss_znacilni)
