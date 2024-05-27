@@ -132,6 +132,15 @@ jobs:
         python src/data/zdruzitevTest.py
         python src/data/run_validator.py
         dvc push -r origin
+
+    - name: Deploy DataDocs to Netlify
+      uses: nwtgck/actions-netlify@v1.2
+      with:
+        publish-dir: "gx/uncommitted/data_docs/local_site"
+        production-deploy: true
+      env:
+        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
         
 
   evidently:
@@ -166,6 +175,15 @@ jobs:
         dvc add data/processed/learning_data.csv
         dvc push -r origin
         python src/data/eviden.py
+
+    - name: Deploy DataDocs to Netlify
+      uses: nwtgck/actions-netlify@v1.2
+      with:
+        publish-dir: "reports/figures"
+        production-deploy: true
+      env:
+        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
 
     - name: Commit changes
       run: |

@@ -8,6 +8,7 @@ from sklearn.preprocessing import FunctionTransformer
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
+import tensorflow as tf
 import mlflow
 import os
 import joblib
@@ -24,28 +25,22 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     train_data = pd.read_csv('data/processed/learning_data.csv')
     eval_data = pd.read_csv('data/processed/evaluation_data.csv')
 
-    # Custom encoding function
     def encode_pretok_znacilni(column):
         mapping = {'mali pretok': 0, 'srednji pretok': 1, 'velik pretok': 3,'':4}
         return column.replace(mapping)
 
-    # Apply the custom encoding function before converting to numeric
     train_data['Pretok Znacilni'] = encode_pretok_znacilni(train_data['Pretok Znacilni'])
     eval_data['Pretok Znacilni'] = encode_pretok_znacilni(eval_data['Pretok Znacilni'])
 
-
-    # Check and convert target columns to numeric
     train_data['Pretok'] = pd.to_numeric(train_data['Pretok'], errors='coerce')
     train_data['Pretok Znacilni'] = pd.to_numeric(train_data['Pretok Znacilni'], errors='coerce')
     eval_data['Pretok'] = pd.to_numeric(eval_data['Pretok'], errors='coerce')
     eval_data['Pretok Znacilni'] = pd.to_numeric(eval_data['Pretok Znacilni'], errors='coerce')
 
-    # Define feature columns
     numerical_features = ['Temperature 2m', 'Rain']
     categorical_features = ['Weather Code', 'Merilno Mesto']
     pretok_znacilni_feature = ['Pretok Znacilni']
 
-    # Define preprocessing pipelines
     numerical_pipeline = Pipeline([
         ('imputer', SimpleImputer(strategy='mean')),
         ('scaler', MinMaxScaler())
@@ -67,7 +62,6 @@ with mlflow.start_run(run_name="GrajenjeModela"):
         ('pretok_znacilni', pretok_znacilni_pipeline, pretok_znacilni_feature)
     ])
 
-    # Split features and target
     X_train = train_data[numerical_features + categorical_features + pretok_znacilni_feature]
     y_train_pretok = train_data['Pretok']
     y_train_znacilni = train_data['Pretok Znacilni']
@@ -76,30 +70,19 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     y_eval_pretok = eval_data['Pretok']
     y_eval_znacilni = eval_data['Pretok Znacilni']
 
-    # Preprocess features
     X_train_processed = preprocessor.fit_transform(X_train)
     X_eval_processed = preprocessor.transform(X_eval)
 
     y_train_znacilni = y_train_znacilni.fillna(4)
 
-    # Ensure sequence length is appropriate
     sequence_length = 1
     batch_size = 32
 
-    # Create TimeseriesGenerator for training and evaluation
     train_gen_pretok = TimeseriesGenerator(X_train_processed, y_train_pretok, length=sequence_length, batch_size=batch_size)
     eval_gen_pretok = TimeseriesGenerator(X_eval_processed, y_eval_pretok, length=sequence_length, batch_size=batch_size)
 
     train_gen_znacilni = TimeseriesGenerator(X_train_processed, y_train_znacilni, length=sequence_length, batch_size=batch_size)
     eval_gen_znacilni = TimeseriesGenerator(X_eval_processed, y_eval_znacilni, length=sequence_length, batch_size=batch_size)
-
-    print("----------------")
-
-    print(X_train_processed)
-    print(y_train_znacilni)
-
-
-    print("----------------")
 
     # PRETOK Model
     model_pretok = Sequential()
@@ -124,6 +107,13 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     print(f'Pretok Znacilni model loss: {loss_znacilni}')
 
     model_znacilni.save("src/models/model.h5")
+
+    converter = tf.lite.TFLiteConverter.from_keras_model(model_znacilni)
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    tflite_model = converter.convert()
+
+    with open('src/models/model_quantized.tflite', 'wb') as f:
+        f.write(tflite_model)
 
     mlflow.log_metric("LossPretoka",loss_pretok)
     mlflow.log_metric("Loss znacilnosti pretoka",loss_znacilni)
