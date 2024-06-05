@@ -110,6 +110,7 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     print(f'Pretok Znacilni model loss: {loss_znacilni}')
 
     model_znacilni.save("src/models/model.h5")
+    model_pretok.save("src/models/modelRob.h5")
 
     converter = tf.lite.TFLiteConverter.from_keras_model(model_znacilni)
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
@@ -135,7 +136,7 @@ with mlflow.start_run(run_name="GrajenjeModela"):
     mlflow.log_param("Sekvenca dolzina",sequence_length)
     mlflow.log_param("Batch size",batch_size)
 
-    joblib.dump(preprocessor, 'models/preprocessor_pipeline.pkl')
+    joblib.dump(preprocessor, 'src/models/preprocessor_pipeline.pkl')
 
     try:
         previous_production_run = mlflow.search_runs(filter_string="tags.environment = 'production'",order_by=["start_time DESC"]).iloc[0]

@@ -6,10 +6,18 @@ import numpy as np
 import pandas as pd
 from flask_cors import CORS, cross_origin
 import os
+from pymongo import MongoClient
 
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
+
+client = MongoClient("mongodb://zanpovse11:vajaPodat@ac-8cbyeyh-shard-00-00.jyeuzzi.mongodb.net:27017,ac-8cbyeyh-shard-00-01.jyeuzzi.mongodb.net:27017,ac-8cbyeyh-shard-00-02.jyeuzzi.mongodb.net:27017/?ssl=true&replicaSet=atlas-sjg7z8-shard-0&authSource=admin&retryWrites=true&w=majority&appName=PTS")
+DB_NAME = "iis"
+
+db = client[DB_NAME]
+
+collection = db['klici']
 
 os.environ["MLFLOW_TRACKING_USERNAME"] = "ZanPovseGit"
 os.environ["MLFLOW_TRACKING_PASSWORD"] = "761209f44c347c69076d1becee6ca6c1d9257e4f"
@@ -42,6 +50,8 @@ model =load_model_pret()
 @cross_origin()
 def predict():
     data = request.json
+    insert_result = collection.insert_one(data)
+    
     df = pd.DataFrame([data])
 
     df['Pretok Znacilni'] = encode_pretok_znacilni(df['Pretok Znacilni'])

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>River Drava Prediction</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+</head>
+<body>
+    <div id="map" style="width: 100%; height: 600px;"></div>
+    <script>
+        // Initialize map
+        var map = L.map('map').setView([46.5547, 15.6459], 12);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Add marker for River Drava
+        var marker = L.marker([46.5547, 15.6459]).addTo(map)
+            .bindPopup('Loading');
+
+        // Fetch prediction data on marker click
+        marker.on('click', function() {
+            $.ajax({
+                url: '/predict',
+                type: 'GET',
+                success: function(data) {
+                    var popupContent = `
+                        <b>Prediction:</b><br>
+                        Pretok: ${data.pretok}<br>
+                        Znacilni pretok: ${data.znacilni}
+                    `;
+                    marker.setPopupContent(popupContent).openPopup();
+                },
+                error: function() {
+                    marker.setPopupContent('Error fetching prediction data.').openPopup();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
